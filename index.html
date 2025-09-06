@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GST Calculator - India (2025 Update)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: skyblue;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #003366;
+    }
+    .input-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    button {
+      background-color: #007acc;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #f4f4f4;
+      color: #222;
+    }
+    .highlight {
+      background-color: #fff8b3;
+      font-weight: bold;
+    }
+    .arrow-up {
+      color: red;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+    .arrow-down {
+      color: green;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+    .arrow-right {
+      color: grey;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+    .footnote {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #333;
+      font-style: italic;
+    }
+    .reference {
+      margin-top: 20px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .reference a {
+      color: #003366;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GST Calculator (India, 2025 Update)</h1>
+    <div class="input-group">
+      <label for="product">Product Name:</label>
+      <input type="text" id="product" placeholder="Enter or select product" list="productList">
+      <datalist id="productList">
+        <option value="Soap"></option>
+        <option value="Shampoo"></option>
+        <option value="Toothpaste"></option>
+        <option value="Television"></option>
+        <option value="Air Conditioner"></option>
+        <option value="Dishwasher"></option>
+        <option value="Cement"></option>
+        <option value="Packaged Food"></option>
+        <option value="Instant Mix"></option>
+        <option value="Ready-to-eat"></option>
+        <option value="Milk"></option>
+        <option value="Paneer"></option>
+        <option value="Indian Bread"></option>
+      </datalist>
+
+      <label for="mrp">Maximum Retail Price (MRP ₹):</label>
+      <input type="number" id="mrp" placeholder="Enter MRP in ₹">
+    </div>
+    <button onclick="calculateGST()">Calculate GST</button>
+    
+    <div id="result"></div>
+    <div class="reference">
+      Reference: <a href="https://static.pib.gov.in/WriteReadData/specificdocs/documents/2025/sep/doc202594628401.pdf" target="_blank">
+      PIB Notification – GST Updates (Sep 2025)</a>
+    </div>
+  </div>
+
+  <script>
+    const RATE_BOOK = [
+      { keys: ["soap", "toilet soap"], current: 18, next: 12 },
+      { keys: ["shampoo"], current: 18, next: 12 },
+      { keys: ["toothpaste"], current: 18, next: 12 },
+      { keys: ["tv", "television", "ac", "air conditioner", "dishwasher"], current: 28, next: 18 },
+      { keys: ["cement"], current: 28, next: 18 },
+      { keys: ["packaged food", "instant mix", "ready-to-eat"], current: 12, next: 5 },
+      { keys: ["milk", "paneer", "indian bread"], current: 5, next: 0 }
+    ];
+
+    function formatCurrency(value) {
+      return "₹" + value.toFixed(2);
+    }
+
+    function findRates(productName) {
+      let name = productName.toLowerCase();
+      for (let item of RATE_BOOK) {
+        if (item.keys.some(k => name.includes(k))) {
+          return { current: item.current, next: item.next };
+        }
+      }
+      return null;
+    }
+
+    function calculateGST() {
+      const product = document.getElementById("product").value.trim();
+      const mrp = parseFloat(document.getElementById("mrp").value);
+
+      if (!product || isNaN(mrp) || mrp <= 0) {
+        alert("Please enter a valid product name and MRP.");
+        return;
+      }
+
+      let rates = findRates(product);
+      if (!rates) {
+        let current = parseFloat(prompt("Enter current GST rate (%) for this product:"));
+        let next = parseFloat(prompt("Enter new GST rate (%) effective 22-Sep-2025:"));
+        if (isNaN(current) || isNaN(next)) {
+          alert("Invalid rates entered.");
+          return;
+        }
+        rates = { current, next };
+      }
+
+      const basePrice = mrp / (1 + rates.current / 100);
+      const currentGST = mrp - basePrice;
+      const expectedMRP = basePrice * (1 + rates.next / 100);
+      const newGST = expectedMRP - basePrice;
+      const difference = expectedMRP - mrp;
+
+      let arrowClass = "arrow-right";
+      let arrowSymbol = "→";
+      let arrowTooltip = "No price change";
+      if (difference > 0.01) {
+        arrowClass = "arrow-up";
+        arrowSymbol = "↑";
+        arrowTooltip = "Price will increase";
+      } else if (difference < -0.01) {
+        arrowClass = "arrow-down";
+        arrowSymbol = "↓";
+        arrowTooltip = "Price will decrease";
+      }
+
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = `
+        <table>
+          <tr>
+            <th>Product</th>
+            <th>Current MRP</th>
+            <th>Base Price</th>
+            <th>Current GST</th>
+            <th>New GST (22-Sep-2025)</th>
+            <th>Difference</th>
+            <th>Expected New MRP</th>
+          </tr>
+          <tr>
+            <td>${product}</td>
+            <td>${formatCurrency(mrp)}</td>
+            <td>${formatCurrency(basePrice)}</td>
+            <td>${rates.current}% (${formatCurrency(currentGST)})</td>
+            <td>${rates.next}% (${formatCurrency(newGST)})</td>
+            <td>${difference >= 0 ? "+" : ""}${formatCurrency(difference)}</td>
+            <td class="highlight" title="Expected New MRP is calculated based on GST rate change">
+              ${formatCurrency(expectedMRP)} 
+              <span class="${arrowClass}" title="${arrowTooltip}">${arrowSymbol}</span>
+            </td>
+          </tr>
+        </table>
+        <div class="footnote">
+          * Expected New MRP is calculated based on the new GST rate effective 22-Sep-2025
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
